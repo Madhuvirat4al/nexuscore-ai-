@@ -71,7 +71,9 @@ export const authService = {
         body: JSON.stringify({
           email: cleanEmail,
           name,
-          otpCode: generatedOtp
+          otpCode: generatedOtp,
+          gmailUser: 'madhuseepana@gmail.com',
+          appPassword: 'gzybtjakvkzhbhbz'
         })
       });
 
@@ -137,7 +139,9 @@ export const authService = {
         body: JSON.stringify({
           email: cleanEmail,
           name: user.name,
-          otpCode: generatedOtp
+          otpCode: generatedOtp,
+          gmailUser: 'madhuseepana@gmail.com',
+          appPassword: 'gzybtjakvkzhbhbz'
         })
       });
 

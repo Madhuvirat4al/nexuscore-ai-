@@ -7,6 +7,7 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: './', // Allow relative asset paths for custom domain and GitHub Pages deployment
   plugins: [
     react(),
     tailwindcss(),
@@ -22,8 +23,6 @@ export default defineConfig({
             req.on('end', async () => {
               try {
                 const { prompt, systemContext, apiKey } = JSON.parse(body);
-                console.log(`[Realtime AI Proxy] Query: "${prompt}"`);
-
                 const activeApiKey = apiKey || process.env.GEMINI_API_KEY || '';
 
                 // A. Try Google Gemini API if Key is provided
@@ -96,7 +95,6 @@ export default defineConfig({
                   console.warn('[Wikipedia Search Error]', e);
                 }
 
-                // Fallback response if web search has no results
                 res.statusCode = 200;
                 res.setHeader('Content-Type', 'application/json');
                 return res.end(JSON.stringify({
@@ -123,8 +121,6 @@ export default defineConfig({
                 const { email, name, otpCode, customFrom } = JSON.parse(body);
                 const senderAddress = customFrom || 'NexusCore Security <security@nexuscore.com>';
                 const keyToUse = RESEND_API_KEY || 're_test_dummy';
-
-                console.log(`[Resend Proxy] Sending OTP email to: ${email} from ${senderAddress}`);
 
                 const response = await fetch('https://api.resend.com/emails', {
                   method: 'POST',
@@ -158,8 +154,6 @@ export default defineConfig({
                 });
 
                 const resData = await response.json();
-                console.log(`[Resend Proxy Response] Status: ${response.status}`, resData);
-
                 res.statusCode = response.status;
                 res.setHeader('Content-Type', 'application/json');
                 res.end(JSON.stringify(resData));

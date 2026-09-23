@@ -42,7 +42,11 @@ export const authService = {
 
     // Check if account already exists
     if (users.some(u => u.email === cleanEmail)) {
-      return { success: false, message: `An account with email ${cleanEmail} is already registered. Please log in.` };
+      return {
+        success: false,
+        isExisting: true,
+        message: `Account ${cleanEmail} already exists! Please click "Log In (Sign In)" above.`
+      };
     }
 
     // Generate fresh 6-digit OTP code
@@ -190,15 +194,27 @@ export const authService = {
         let finalUserSession = null;
 
         if (pending.type === 'REGISTRATION') {
-          // Save new registered account to database
-          const newUser = {
-            id: `usr_${Math.random().toString(36).substring(2, 9)}`,
-            ...pending.userDetails,
-            encryptedVaultId: `vault_aes256_${Math.random().toString(36).substring(2, 10)}`,
-            registeredAt: new Date().toISOString()
-          };
+          // Check if user already exists to prevent duplicate array entries
+          const existingIdx = users.findIndex(u => u.email === pending.userDetails.email);
+          let newUser;
 
-          users.push(newUser);
+          if (existingIdx >= 0) {
+            newUser = {
+              ...users[existingIdx],
+              ...pending.userDetails,
+              updatedAt: new Date().toISOString()
+            };
+            users[existingIdx] = newUser;
+          } else {
+            newUser = {
+              id: `usr_${Math.random().toString(36).substring(2, 9)}`,
+              ...pending.userDetails,
+              encryptedVaultId: `vault_aes256_${Math.random().toString(36).substring(2, 10)}`,
+              registeredAt: new Date().toISOString()
+            };
+            users.push(newUser);
+          }
+
           localStorage.setItem(USERS_DB_KEY, JSON.stringify(users));
           finalUserSession = newUser;
         } else {

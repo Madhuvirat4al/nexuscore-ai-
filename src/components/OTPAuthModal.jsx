@@ -39,6 +39,9 @@ export default function OTPAuthModal({ isOpen, onClose, onAuthSuccess }) {
       if (res.success) {
         setStep('otp');
         setStatusMsg(res.message);
+      } else if (res.isExisting) {
+        setAuthTab('login');
+        setErrorMsg(res.message);
       } else {
         setErrorMsg(res.message);
       }

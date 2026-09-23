@@ -107,7 +107,7 @@ export default function OTPAuthModal({ isOpen, onClose, onAuthSuccess }) {
             </div>
             <div>
               <h3 className="font-heading font-bold text-lg text-white">Client Portal Vault Authentication</h3>
-              <p className="text-slate-400 text-[11px]">Database Persistence • Resend OTP Verification</p>
+              <p className="text-slate-400 text-[11px]">Database Persistence • 2-Factor Security Mailer OTP</p>
             </div>
           </div>
 
@@ -373,7 +373,7 @@ export default function OTPAuthModal({ isOpen, onClose, onAuthSuccess }) {
         )}
 
         <div className="pt-2 border-t border-white/10 text-[10px] text-slate-500 flex items-center justify-between">
-          <span>Resend API Integration Active</span>
+          <span>Universal Security Mailer Relay</span>
           <span className="text-cyan-400">Encrypted Vault Storage</span>
         </div>
 

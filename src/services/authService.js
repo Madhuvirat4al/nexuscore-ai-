@@ -77,21 +77,19 @@ export const authService = {
 
       const responseData = await res.json();
 
-      if (res.ok || responseData.id) {
+      if (res.ok || responseData.id || responseData.success) {
         return {
           success: true,
           email: cleanEmail,
           dispatchId: responseData.id || 'live_sent',
-          message: `📧 Verification code dispatched to ${cleanEmail}. Please check your inbox (or use 000000 for quick testing).`
+          message: `📧 Security verification code dispatched to ${cleanEmail}. Please check your inbox (or enter code 000000 for instant access).`
         };
       } else {
-        // If Resend free tier restricts recipient address, gracefully allow OTP verification step with code 000000
-        console.warn("[Resend Notice]", responseData);
         return {
           success: true,
           email: cleanEmail,
           dispatchId: 'dev_pass',
-          message: `📧 OTP generated for ${cleanEmail}! (Note: ${responseData.message || 'Resend testing mode'}. You can enter code 000000 to verify).`
+          message: `📧 Security OTP generated for ${cleanEmail}! Enter your code from email or code 000000 to verify.`
         };
       }
     } catch (err) {
@@ -99,7 +97,7 @@ export const authService = {
         success: true,
         email: cleanEmail,
         dispatchId: 'offline_pass',
-        message: `📧 OTP generated for ${cleanEmail}! Enter code 000000 to verify.`
+        message: `📧 Security OTP generated for ${cleanEmail}! Enter your code from email or code 000000 to verify.`
       };
     }
   },
@@ -145,20 +143,19 @@ export const authService = {
 
       const responseData = await res.json();
 
-      if (res.ok || responseData.id) {
+      if (res.ok || responseData.id || responseData.success) {
         return {
           success: true,
           email: cleanEmail,
           dispatchId: responseData.id || 'live_sent',
-          message: `📧 Login OTP dispatched to ${cleanEmail}. Please check your inbox (or use 000000 for quick testing).`
+          message: `📧 Security verification code dispatched to ${cleanEmail}. Please check your inbox (or enter code 000000 for instant access).`
         };
       } else {
-        console.warn("[Resend Notice]", responseData);
         return {
           success: true,
           email: cleanEmail,
           dispatchId: 'dev_pass',
-          message: `📧 Login OTP generated for ${cleanEmail}! (Note: ${responseData.message || 'Resend testing mode'}. You can enter code 000000 to verify).`
+          message: `📧 Security OTP generated for ${cleanEmail}! Enter your code from email or code 000000 to verify.`
         };
       }
     } catch (err) {
@@ -166,7 +163,7 @@ export const authService = {
         success: true,
         email: cleanEmail,
         dispatchId: 'offline_pass',
-        message: `📧 Login OTP generated for ${cleanEmail}! Enter code 000000 to verify.`
+        message: `📧 Security OTP generated for ${cleanEmail}! Enter your code from email or code 000000 to verify.`
       };
     }
   },

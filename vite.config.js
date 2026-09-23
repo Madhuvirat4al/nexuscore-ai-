@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import nodemailer from 'nodemailer';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -109,54 +110,55 @@ export default defineConfig({
             return;
           }
 
-          // 2. BREVO REST API PROXY (/api/send-otp)
+          // 2. GMAIL SMTP OTP EMAIL PROXY (/api/send-otp)
           if (req.url === '/api/send-otp' && req.method === 'POST') {
             let body = '';
             req.on('data', chunk => { body += chunk; });
             req.on('end', async () => {
               try {
-                const { email, name, otpCode, apiKey } = JSON.parse(body);
-                const activeBrevoKey = apiKey || process.env.BREVO_API_KEY || '';
+                const { email, name, otpCode, appPassword, gmailUser: bodyGmailUser } = JSON.parse(body);
+                const gmailUser = bodyGmailUser || process.env.GMAIL_USER || 'madhuseepana@gmail.com';
+                const gmailAppPassword = appPassword || process.env.GMAIL_APP_PASSWORD || process.env.GMAIL_PASS || '';
 
-                console.log(`[Brevo Local Proxy] Dispatching OTP code ${otpCode} to ${email}`);
+                console.log(`[Gmail SMTP Local Proxy] Sending real-time OTP code ${otpCode} to ${email}`);
 
-                if (activeBrevoKey && activeBrevoKey.trim().length > 5) {
-                  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-                    method: 'POST',
-                    headers: {
-                      'api-key': activeBrevoKey.trim(),
-                      'Content-Type': 'application/json',
-                      'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                      sender: { name: 'NexusCore Security', email: 'security@nexuscore.com' },
-                      to: [{ email: email, name: name || 'Enterprise User' }],
-                      subject: `🔐 NexusCore AI Verification Code: ${otpCode}`,
-                      htmlContent: `
-                        <div style="font-family: Arial, sans-serif; background-color: #0A0F1D; color: #F1F5F9; padding: 30px; border-radius: 16px; max-width: 500px; margin: 0 auto; border: 1px solid #1C2541;">
-                          <div style="text-align: center; margin-bottom: 20px;">
-                            <h2 style="color: #48CAE4; font-size: 24px; margin: 0; letter-spacing: 2px;">NEXUSCORE.AI</h2>
-                            <p style="color: #94A3B8; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;">Enterprise Vault Authentication</p>
-                          </div>
-                          <p style="font-size: 14px; color: #CBD5E1;">Hello <strong>${name || 'Enterprise User'}</strong>,</p>
-                          <p style="font-size: 14px; color: #CBD5E1;">Your 6-digit verification code to access your single-tenant encrypted vault is:</p>
-                          
-                          <div style="background-color: #1C2541; border: 1px solid #48CAE4; border-radius: 12px; padding: 20px; text-align: center; margin: 25px 0;">
-                            <span style="font-family: monospace; font-size: 36px; font-weight: bold; color: #00F5D4; letter-spacing: 8px;">${otpCode}</span>
-                          </div>
-                          
-                          <p style="font-size: 12px; color: #94A3B8; text-align: center;">This code will expire in 5 minutes. Please enter it in the app to complete your authentication.</p>
-                          <hr style="border: 0; border-top: 1px solid #1C2541; margin: 25px 0;" />
-                          <p style="font-size: 10px; color: #64748B; text-align: center;">© 2026 NexusCore AI • Enterprise Supply Chain & Financial Risk Copilot</p>
-                        </div>
-                      `
-                    })
+                if (gmailAppPassword && gmailAppPassword.trim().length > 5) {
+                  const transporter = nodemailer.createTransport({
+                    service: 'gmail',
+                    auth: {
+                      user: gmailUser.trim(),
+                      pass: gmailAppPassword.trim().replace(/\s+/g, '')
+                    }
                   });
 
-                  const resData = await response.json();
+                  const mailOptions = {
+                    from: `"NexusCore AI Security" <${gmailUser.trim()}>`,
+                    to: email.trim(),
+                    subject: `🔐 NexusCore AI Security Verification Code: ${otpCode}`,
+                    html: `
+                      <div style="font-family: Arial, sans-serif; background-color: #0A0F1D; color: #F1F5F9; padding: 30px; border-radius: 16px; max-width: 500px; margin: 0 auto; border: 1px solid #1C2541;">
+                        <div style="text-align: center; margin-bottom: 20px;">
+                          <h2 style="color: #48CAE4; font-size: 24px; margin: 0; letter-spacing: 2px;">NEXUSCORE.AI</h2>
+                          <p style="color: #94A3B8; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;">Enterprise Vault Authentication</p>
+                        </div>
+                        <p style="font-size: 14px; color: #CBD5E1;">Hello <strong>${name || 'Enterprise User'}</strong>,</p>
+                        <p style="font-size: 14px; color: #CBD5E1;">Your 6-digit verification code to access your single-tenant encrypted vault is:</p>
+                        
+                        <div style="background-color: #1C2541; border: 1px solid #48CAE4; border-radius: 12px; padding: 20px; text-align: center; margin: 25px 0;">
+                          <span style="font-family: monospace; font-size: 36px; font-weight: bold; color: #00F5D4; letter-spacing: 8px;">${otpCode}</span>
+                        </div>
+                        
+                        <p style="font-size: 12px; color: #94A3B8; text-align: center;">This code will expire in 5 minutes. Please enter it in the app to complete your authentication.</p>
+                        <hr style="border: 0; border-top: 1px solid #1C2541; margin: 25px 0;" />
+                        <p style="font-size: 10px; color: #64748B; text-align: center;">© 2026 NexusCore AI • Enterprise Supply Chain & Financial Risk Copilot</p>
+                      </div>
+                    `
+                  };
+
+                  const info = await transporter.sendMail(mailOptions);
                   res.statusCode = 200;
                   res.setHeader('Content-Type', 'application/json');
-                  return res.end(JSON.stringify({ success: true, id: resData.messageId || 'bv_sent', message: `OTP sent to ${email}` }));
+                  return res.end(JSON.stringify({ success: true, id: info.messageId, message: `OTP sent to ${email}` }));
                 }
 
                 res.statusCode = 200;
@@ -167,7 +169,7 @@ export default defineConfig({
                   message: `OTP generated for ${email}. Enter code ${otpCode} or 000000 to verify.`
                 }));
               } catch (err) {
-                console.error(`[Brevo Local Proxy Error]`, err);
+                console.error(`[Gmail SMTP Proxy Error]`, err);
                 res.statusCode = 200;
                 res.setHeader('Content-Type', 'application/json');
                 res.end(JSON.stringify({ success: true, message: `OTP generated: ${otpCode}` }));
